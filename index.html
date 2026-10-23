@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リボン運動クイズ</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:20px 0;font-family:Arial,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;background:linear-gradient(135deg,#ffe6f0,#fff5f8);color:#111}
+.container{width:96%;max-width:900px;margin:auto;background:white;border-radius:28px;padding:clamp(20px,5vw,45px);box-shadow:0 10px 30px #0002}
+#start-screen{text-align:center}
+h1,h2{color:#d62f63}
+h1{font-size:clamp(30px,5vw,44px)}
+.start-description{font-size:22px;line-height:1.8;margin-bottom:25px}
+.start-info{background:#fff0f5;border-radius:18px;padding:20px;margin-bottom:25px;line-height:2;font-size:19px}
+button,.choice{font-size:19px;font-weight:bold;cursor:pointer;border-radius:16px;padding:16px;margin:10px 0;width:100%;border:2px solid #f0a9bf;background:#fff5f8;color:#111}
+button{background:#e75480;color:white;border:none}
+button:hover{background:#d94370}
+.question-number{color:#c52658;font-size:20px;font-weight:bold;margin-bottom:15px}
+.progress-container{height:14px;background:#eee;border-radius:10px;overflow:hidden;margin-bottom:20px}
+.progress-bar{height:100%;background:#e75480;width:0;transition:width .3s}
+.timer{text-align:center;font-size:24px;font-weight:bold;color:#c52658;margin:20px}
+.question{font-size:clamp(22px,4vw,29px);font-weight:bold;line-height:1.7;margin-bottom:20px}
+.choice:hover{background:#ffe3ec}
+.choice.correct{background:#d4edda;border-color:#28a745;color:#0b4d20}
+.choice.wrong{background:#f8d7da;border-color:#dc3545;color:#721c24}
+#answer,.result-message{background:#fff0f5;border-radius:18px;padding:20px;margin-top:20px;line-height:1.8;font-size:18px}
+#next,#restart{margin-top:20px}
+#quiz-screen,#result,#answer,#next{display:none}
+#result{text-align:center}
+.score{font-size:32px;font-weight:bold;margin:20px}
+.accuracy{font-size:24px;font-weight:bold}
+.rank{font-size:27px;color:#c52658;font-weight:bold;margin:20px}
+.trivia{margin-top:30px;text-align:left;background:#fff7fa;border:2px solid #f3b5c7;border-radius:20px;padding:20px}
+.trivia-title{text-align:center;color:#c52658;font-size:23px;font-weight:bold;margin-bottom:15px}
+.trivia-item{background:white;border-radius:12px;padding:15px;margin:12px 0;line-height:1.8}
+@media(max-width:600px){.start-description{font-size:19px}.choice{font-size:17px}.timer{font-size:21px}}
+</style>
+</head>
+<body>
+<div class="container">
+<div id="start-screen">
+<h1>🎀 リボン運動クイズ 🎀</h1>
+<div class="start-description">リボン運動についてのクイズに<br>挑戦してみよう！</div>
+<div class="start-info">📝 全12問<br>⏱️ 1問20秒<br>🎯 リボン運動について楽しく学ぼう！</div>
+<button id="start-button" onclick="startQuiz()">クイズを始める！</button>
+</div>
+<div id="quiz-screen">
+<div class="question-number" id="question-number"></div>
+<div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+<div class="timer" id="timer">⏱️ 残り20秒</div>
+<div class="question" id="question"></div>
+<div id="choices"></div>
+<div id="answer"><strong>💡 解説</strong><div id="correct-answer"></div></div>
+<button id="next" onclick="nextQuestion()">次の問題へ</button>
+</div>
+<div id="result">
+<h2>🎉 クイズ終了！</h2>
+<div class="score" id="score"></div>
+<div class="accuracy" id="accuracy"></div>
+<div class="rank" id="rank"></div>
+<div class="result-message" id="result-message"></div>
+<div class="trivia">
+<div class="trivia-title">🎀 リボン運動について知ってほしいこと</div>
+<div class="trivia-item">💗 リボン運動は、社会問題について多くの人に知ってもらうための活動です。</div>
+<div class="trivia-item">🎨 リボンにはさまざまな色があり、それぞれに異なる意味があります。</div>
+<div class="trivia-item">🧡 オレンジリボンは児童虐待防止、ピンクリボンは乳がんについての啓発などを表しています。</div>
+<div class="trivia-item">🌱 リボン運動を知ることは、社会問題について考えるきっかけになります。</div>
+<div class="trivia-item">🔍 身近なところでリボンを見つけたら、「これは何を表しているのだろう？」と調べてみましょう。</div>
+</div>
+<button id="restart" onclick="restartQuiz()">もう一度挑戦する</button>
+</div>
+</div>
+<script>
+const quizData = [
+{question:"ピンクリボンが表している社会問題はどれ？",choices:["児童虐待","乳がん","HIV・エイズ","環境問題"],answer:"乳がん",explanation:"ピンクリボンは、乳がんについての啓発活動などに使われています。"},
+{question:"オレンジリボンが表している社会問題はどれ？",choices:["児童虐待","乳がん","交通安全","環境問題"],answer:"児童虐待",explanation:"オレンジリボンは、児童虐待防止を呼びかける活動に使われています。"},
+{question:"レッドリボンが表しているものはどれ？",choices:["児童虐待","HIV・エイズ","乳がん","いじめ"],answer:"HIV・エイズ",explanation:"レッドリボンは、HIV・エイズへの理解や支援を表すものとして知られています。"},
+{question:"パープルリボンが表しているものとして知られているのはどれ？",choices:["暴力や虐待など","乳がん","児童虐待","環境問題"],answer:"暴力や虐待など",explanation:"パープルリボンは、暴力や虐待などの問題についての啓発に使われています。"},
+{question:"リボン運動で大切なことはどれ？",choices:["リボンを集めること","社会問題について知り、理解を広げること","リボンを販売すること","色を覚えることだけ"],answer:"社会問題について知り、理解を広げること",explanation:"リボン運動は、社会問題について知ってもらい、理解を広げることにつながります。"},
+{question:"リボン運動で色によって意味が異なるのはなぜ？",choices:["色によって値段が違うから","社会問題を区別して伝えるため","好きな色を選ぶため","決まりがないから"],answer:"社会問題を区別して伝えるため",explanation:"リボンの色ごとに異なる社会問題を表すことで、それぞれの問題を分かりやすく伝えています。"},
+{question:"リボン運動について学ぶことで期待できることは？",choices:["社会問題への関心を持つきっかけになる","すべての問題がすぐに解決する","リボンの作り方が上手になる","色を全部覚えられる"],answer:"社会問題への関心を持つきっかけになる",explanation:"リボン運動を知ることで、今まで知らなかった社会問題に関心を持つきっかけになります。"},
+{question:"リボン運動のリボンを見かけたときにできることは？",choices:["何も考えない","そのリボンが表す問題を調べる","必ず集める","捨てる"],answer:"そのリボンが表す問題を調べる",explanation:"リボンの意味を調べることで、その社会問題について知るきっかけになります。"},
+{question:"ピンクリボンの活動で伝えられていることは？",choices:["乳がんについての正しい知識","交通安全","児童虐待","環境問題"],answer:"乳がんについての正しい知識",explanation:"ピンクリボンは、乳がんについての正しい知識を広める活動などに使われています。"},
+{question:"オレンジリボンが表しているものは？",choices:["HIV・エイズ","児童虐待","乳がん","環境問題"],answer:"児童虐待",explanation:"オレンジリボンは児童虐待防止のシンボルとして使われています。"},
+{question:"リボン運動を知ることが理解につながる理由は？",choices:["問題について知るきっかけになるから","色がきれいだから","リボンを集められるから","ゲームができるから"],answer:"問題について知るきっかけになるから",explanation:"リボン運動をきっかけに社会問題について知ることで、理解を深めることにつながります。"},
+{question:"リボン運動について考えるときに大切なことは？",choices:["色だけを覚えること","それぞれの意味や背景を知ること","リボンをたくさん持つこと","同じ色だけを見ること"],answer:"それぞれの意味や背景を知ること",explanation:"リボンの色だけでなく、そのリボンが表している社会問題や背景を知ることが大切です。"}
+];
+let quiz=[],current=0,score=0,timeLeft=20,timerInterval,answered=false;
+function shuffle(array){for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;}
+function startQuiz(){
+quiz=shuffle([...quizData]);current=0;score=0;
+document.getElementById("start-screen").style.display="none";
+document.getElementById("quiz-screen").style.display="block";
+document.getElementById("result").style.display="none";showQuestion();
+}
+function startTimer(){
+clearInterval(timerInterval);timeLeft=20;document.getElementById("timer").textContent="⏱️ 残り"+timeLeft+"秒";
+timerInterval=setInterval(()=>{timeLeft--;document.getElementById("timer").textContent="⏱️ 残り"+timeLeft+"秒";if(timeLeft<=0){clearInterval(timerInterval);timeUp();}},1000);
+}
+function timeUp(){
+if(answered)return;answered=true;
+document.querySelectorAll(".choice").forEach(choice=>{choice.style.pointerEvents="none";if(choice.textContent===quiz[current].answer)choice.classList.add("correct");});
+document.getElementById("correct-answer").innerHTML="⏰ 時間切れです。<br>正解は「"+quiz[current].answer+"」でした。<br><br>"+quiz[current].explanation;
+document.getElementById("answer").style.display="block";document.getElementById("next").style.display="block";
+}
+function showQuestion(){
+clearInterval(timerInterval);answered=false;const data=quiz[current];
+document.getElementById("question-number").textContent="第 "+(current+1)+" 問 / "+quiz.length+" 問";
+document.getElementById("question").textContent=data.question;
+document.getElementById("progress-bar").style.width=((current+1)/quiz.length*100)+"%";
+const choicesDiv=document.getElementById("choices");choicesDiv.innerHTML="";
+shuffle([...data.choices]).forEach(choice=>{
+const div=document.createElement("button");div.className="choice";div.textContent=choice;
+div.onclick=()=>checkAnswer(div,choice);choicesDiv.appendChild(div);
+});
+document.getElementById("answer").style.display="none";document.getElementById("next").style.display="none";startTimer();
+}
+function checkAnswer(element,selected){
+if(answered)return;answered=true;clearInterval(timerInterval);
+document.querySelectorAll(".choice").forEach(choice=>choice.style.pointerEvents="none");
+if(selected===quiz[current].answer){element.classList.add("correct");score++;document.getElementById("correct-answer").innerHTML="⭕ 正解！<br><br>"+quiz[current].explanation;}
+else{element.classList.add("wrong");document.querySelectorAll(".choice").forEach(choice=>{if(choice.textContent===quiz[current].answer)choice.classList.add("correct");});document.getElementById("correct-answer").innerHTML="❌ 不正解です。<br>正解は「"+quiz[current].answer+"」でした。<br><br>"+quiz[current].explanation;}
+document.getElementById("answer").style.display="block";document.getElementById("next").style.display="block";
+}
+function nextQuestion(){current++;if(current<quiz.length)showQuestion();else showResult();}
+function showResult(){
+clearInterval(timerInterval);document.getElementById("quiz-screen").style.display="none";document.getElementById("result").style.display="block";
+document.getElementById("score").textContent=score+" / "+quiz.length+" 問正解";
+document.getElementById("accuracy").textContent="正解率："+Math.round(score/quiz.length*100)+"%";
+let rank,comment;
+if(score===12){rank="🏆 リボン運動マスター！";comment="全問正解です！すばらしいです！<br>リボン運動について、とてもよく理解できています。";}
+else if(score>=10){rank="🌟 とてもよくできました！";comment="あと少しで全問正解でした！<br>リボン運動について、しっかり理解できています。";}
+else if(score>=8){rank="👏 よくできました！";comment="多くの問題に正解できました！<br>リボン運動について、かなり理解できています。";}
+else if(score>=6){rank="😊 いい調子です！";comment="半分以上正解できました！<br>間違えた問題の解説も確認してみましょう。";}
+else if(score>=4){rank="📖 もう少し！";comment="リボン運動について知ることができました。<br>もう一度挑戦すると、さらに理解を深められます。";}
+else{rank="🌱 ここからスタート！";comment="まずはリボン運動について知ることができました。<br>「知ってほしいこと」を読んで、もう一度挑戦してみましょう！";}
+document.getElementById("rank").textContent=rank;document.getElementById("result-message").innerHTML=comment;
+}
+function restartQuiz(){clearInterval(timerInterval);document.getElementById("result").style.display="none";document.getElementById("start-screen").style.display="block";}
+</script>
+</body>
+</html>
